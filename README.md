@@ -10,3 +10,7 @@
 
 `last_sha.txt`는 마지막으로 알린 커밋이다. Actions 탭의 "Run workflow"로 바로 실행해 볼 수 있다.
 로컬 확인: `GITHUB_TOKEN=$(gh auth token) DRY_RUN=1 BASE_SHA=<예전 커밋> python watch.py`
+
+Gemini 3.8은 일시적 서버 오류 때 두 기존 키로 최대 3회 시도한다. 429에서는 키를 바꾸어 재시도하지 않는다. 모두 실패하면 `GROQ_API_KEY`가 있을 때 Groq(Qwen 3.8 27B)로 한 번 요약한다. Groq 입력은 작은 발췌로 제한하며 생략 여부를 알림에 표시한다.
+- `GEMINI_API_KEY_BACKUP`: 두 번째 기존 Gemini 프로젝트 키(선택)
+- `GROQ_API_KEY`: Groq 백업 키(선택). 뉴스봇과 같은 프로젝트라면 사용 한도를 공유한다.

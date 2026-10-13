@@ -37,5 +37,33 @@ class SummaryTests(unittest.TestCase):
     with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-only'}), patch('urllib.request.urlopen', return_value=io.BytesIO(b'{}')):
       self.assertIn('생성 결과 없음', watch.ai_summary({'commits': []}))
 
+class FallbackTests(unittest.TestCase):
+  def test_backup_key_after_service_error(self):
+    fail = urllib.error.HTTPError('https://example.invalid', 503, 'busy', {}, None)
+    ok = io.BytesIO(json.dumps({'candidates': [{'content': {'parts': [{'text': 'ok'}]}}]}).encode())
+    with patch.dict(os.environ, {'GEMINI_API_KEY': 'first', 'GEMINI_API_KEY_BACKUP': 'second'}, clear=True), patch('urllib.request.urlopen', side_effect=[fail, ok]) as send, patch('watch.time.sleep'):
+      self.assertEqual(watch.ai_summary({'commits': []}), 'ok')
+      self.assertEqual([c.args[0].get_header('X-goog-api-key') for c in send.call_args_list], ['first', 'second'])
+
+  def test_quota_does_not_rotate_keys(self):
+    fail = urllib.error.HTTPError('https://example.invalid', 429, 'quota', {}, None)
+    with patch.dict(os.environ, {'GEMINI_API_KEY': 'first', 'GEMINI_API_KEY_BACKUP': 'second'}, clear=True), patch('urllib.request.urlopen', side_effect=fail) as send:
+      self.assertIn('429', watch.ai_summary({'commits': []}))
+      self.assertEqual(send.call_count, 1)
+
+  def test_groq_fallback_is_bounded_and_labeled(self):
+    ok = io.BytesIO(json.dumps({'choices': [{'finish_reason': 'stop', 'message': {'content': '백업 요약'}}]}).encode())
+    cmp = {'commits': [{'sha': 'abc', 'commit': {'message': '한글' * 10000}}]}
+    with patch.dict(os.environ, {'GROQ_API_KEY': 'test-only'}, clear=True), patch('urllib.request.urlopen', return_value=ok) as send:
+      result = watch.ai_summary(cmp)
+      self.assertIn('Groq 백업 · 일부 발췌', result)
+      payload = json.loads(send.call_args.args[0].data)
+      self.assertLess(sum(len(m['content'].encode()) for m in payload['messages']), 6000)
+
+  def test_gemini_failure_uses_groq(self):
+    with patch.dict(os.environ, {'GEMINI_API_KEY': 'first', 'GROQ_API_KEY': 'test-only'}, clear=True), patch('watch.gemini_summary', return_value='(AI 요약 실패: API 503)'), patch('watch.groq_summary', return_value='backup') as groq:
+      self.assertEqual(watch.ai_summary({'commits': []}), 'backup')
+      groq.assert_called_once()
+
 if __name__ == '__main__':
   unittest.main()
