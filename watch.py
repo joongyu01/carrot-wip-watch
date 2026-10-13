@@ -126,6 +126,8 @@ def main():
   if dry:
     print(text); return
   telegram(text)
+  if os.environ.get("BASE_SHA"):
+    print("test send", base[:9], "->", head[:9]); return   # manual test: keep the real state
   open(STATE, "w").write(head + "\n")     # only after a successful send, so a failure retries next run
   print("sent", base[:9], "->", head[:9])
 

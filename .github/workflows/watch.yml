@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "*/5 * * * *"   # GitHub's minimum; runs can start late or be skipped under load
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: "테스트 발송: 이 커밋부터 지금까지를 보낸다 (기록은 안 바꿈)"
+        required: false
 
 permissions:
   contents: write
@@ -28,6 +32,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BASE_SHA: ${{ inputs.base_sha }}
         run: python watch.py
       - name: save last seen commit
         run: |
