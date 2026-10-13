@@ -16,7 +16,7 @@ REPO = "ajouatom/openpilot"
 BRANCH = "carrot-wip"
 MY_BRANCH = "joongyu01/carrot-wip-dev"
 STATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "last_sha.txt")
-MODEL = "gemini-3.5-flash-lite"
+MODEL = "gemini-3.8-flash"
 PATCH_BUDGET_CHARS = 300_000  # ~80k tokens of diff; files beyond it go to the model as name + line counts only
 TELEGRAM_LIMIT = 4000
 
