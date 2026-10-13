@@ -23,8 +23,15 @@ class SummaryTests(unittest.TestCase):
 
   def test_api_failure_keeps_notification(self):
     failure = urllib.error.HTTPError('https://example.invalid', 429, 'quota', {}, None)
-    with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-only'}), patch('urllib.request.urlopen', side_effect=failure):
+    with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-only'}), patch('urllib.request.urlopen', side_effect=failure), patch('watch.time.sleep'):
       self.assertIn('429', watch.ai_summary({'commits': []}))
+
+  def test_transient_error_retries(self):
+    failure = urllib.error.HTTPError('https://example.invalid', 503, 'busy', {}, None)
+    response = io.BytesIO(json.dumps({'candidates': [{'content': {'parts': [{'text': '재시도 성공'}]}}]}).encode())
+    with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-only'}), patch('urllib.request.urlopen', side_effect=[failure, response]) as send, patch('watch.time.sleep'):
+      self.assertEqual(watch.ai_summary({'commits': []}), '재시도 성공')
+      self.assertEqual(send.call_count, 2)
 
   def test_empty_result(self):
     with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-only'}), patch('urllib.request.urlopen', return_value=io.BytesIO(b'{}')):

@@ -7,6 +7,7 @@ State: last_sha.txt (the last carrot-wip head that was announced). Env:
 import json
 import os
 import sys
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -102,15 +103,20 @@ def ai_summary(cmp):
     f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent",
     data=json.dumps(payload).encode(),
     headers={"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-  try:
-    with urllib.request.urlopen(req, timeout=90) as response:
-      result = json.load(response)
-  except urllib.error.HTTPError as e:
-    return f"(AI 요약 실패: API {e.code})"
-  except (urllib.error.URLError, TimeoutError):
-    return "(AI 요약 실패: 연결 오류)"
-  except ValueError:
-    return "(AI 요약 실패: 응답 형식 오류)"
+  for attempt in range(3):
+    try:
+      with urllib.request.urlopen(req, timeout=90) as response:
+        result = json.load(response)
+      break
+    except urllib.error.HTTPError as e:
+      if e.code not in (429, 500, 502, 503, 504) or attempt == 2:
+        return f"(AI 요약 실패: API {e.code})"
+    except (urllib.error.URLError, TimeoutError):
+      if attempt == 2:
+        return "(AI 요약 실패: 연결 오류)"
+    except ValueError:
+      return "(AI 요약 실패: 응답 형식 오류)"
+    time.sleep(2 ** (attempt + 1))
   candidates = result.get("candidates", [])
   if not candidates:
     return "(AI 요약 실패: 생성 결과 없음)"
