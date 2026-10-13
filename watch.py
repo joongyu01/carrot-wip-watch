@@ -157,7 +157,7 @@ def groq_summary(prompt):
       {"role": "user", "content": prompt}]}
   req = urllib.request.Request("https://api.groq.com/openai/v1/chat/completions",
     data=json.dumps(payload).encode(),
-    headers={"Content-Type": "application/json", "Authorization": "Bearer " + os.environ["GROQ_API_KEY"]})
+    headers={"Content-Type": "application/json", "User-Agent": "carrot-wip-watch/1.0", "Authorization": "Bearer " + os.environ["GROQ_API_KEY"]})
   try:
     with urllib.request.urlopen(req, timeout=90) as response:
       choice = json.load(response)["choices"][0]

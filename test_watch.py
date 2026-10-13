@@ -58,6 +58,7 @@ class FallbackTests(unittest.TestCase):
       result = watch.ai_summary(cmp)
       self.assertIn('Groq 백업 · 일부 발췌', result)
       payload = json.loads(send.call_args.args[0].data)
+      self.assertEqual(send.call_args.args[0].get_header('User-agent'), 'carrot-wip-watch/1.0')
       self.assertLess(sum(len(m['content'].encode()) for m in payload['messages']), 6000)
 
   def test_gemini_failure_uses_groq(self):
