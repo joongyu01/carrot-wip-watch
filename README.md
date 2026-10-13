@@ -1,7 +1,7 @@
 # carrot-wip-watch
 
 5분마다 `ajouatom/openpilot`의 `carrot-wip`에 새 커밋이 있는지 보고, 있으면 텔레그램으로 알려준다.
-커밋 목록, 바뀐 영역, capnp 변경과 `joongyu01/carrot-wip-dev`와 겹치는 파일, Gemini(2.5 Flash)가 쓴 한국어 변경 요약을 보낸다.
+커밋 목록, 바뀐 영역, capnp 변경과 `joongyu01/carrot-wip-dev`와 겹치는 파일, Gemini(3.5 Flash-Lite)가 쓴 한국어 변경 요약을 보낸다.
 
 ## 설정 (Settings → Secrets and variables → Actions → New repository secret)
 - `TELEGRAM_BOT_TOKEN`: @BotFather가 준 봇 토큰
